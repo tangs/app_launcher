@@ -3,6 +3,9 @@ import 'package:flutter/cupertino.dart';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
+
 void main() => runApp(MyApp());
 
 class MyApp extends StatelessWidget {
@@ -102,25 +105,76 @@ class _MyHomePageState extends State<MyHomePage> {
     return true;
   }
 
+  bool _removeValue(List<String> values, int idx) {
+    if (values == null) {
+      // TODO
+      return false;
+    }
+    if (values.length <= idx) {
+      // TODO 
+      return false;
+    }
+    values.removeAt(idx);
+    return true;
+  }
+
   bool _addPackage() {
-    return _addValue(_packages, _curAddPackage);
+    final ret = _addValue(_packages, _curAddPackage);
+    if (ret) {
+      if (_packages != null && _packages.length == 1) {
+        setState(() {
+          _curPackage = _curAddPackage;
+        });
+      }
+    }
+    return ret;
   }
 
   bool _addUrl() {
-    return _addValue(_urls, _curAddUrl);
+    final ret = _addValue(_urls, _curAddUrl);
+    if (ret) {
+      if (_urls != null && _urls.length == 1) {
+        setState(() {
+          _curUrl = _curAddUrl;
+        });
+      }
+    }
+    return ret;
   }
 
-  void _showCupertinoPicker(BuildContext cxt, List<String> values, Function onSelected) {
+  void _showCupertinoPicker(BuildContext cxt, List<String> values,
+      Function onSelected, Function onRemove) {
     final widgets = List<Widget>();
     if (values == null || values.length == 0) {
       // TODO 没有包名
       return;
     }
-    for (String value in values) {
+    // for (String value in values) {
+    for (int i = 0; i < values.length; ++i) {
+      String value = values[i];
       // widgets.add(Text(value));
-      widgets.add(Center(
-        child: Text(value),
-      ));
+      widgets.add(
+        // child: Text(value),
+        Row(
+          children: <Widget>[
+            // Text(value),
+            Expanded(
+              child: Center(
+                child: Text(value),
+              ),
+              // child: Text(value),
+            ),
+            // FlatButton(
+            //   child: Text(
+            //     "删除",
+            //   ),
+            //   onPressed: () {
+            //     onRemove(i);
+            //   },
+            // ),
+          ],
+        ),
+      );
     }
 
     showCupertinoModalPopup(context: cxt, builder: (cxt){
@@ -135,18 +189,29 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void _showCupertinoPickerPackage(BuildContext cxt) {
-    _showCupertinoPicker(cxt, _packages, (idx) {
+    _showCupertinoPicker(cxt, _packages, 
+    (idx) {
       setState(() {
         _curPackage = _packages[idx];
       });
-    });
+    },
+    (idx) {
+      _removeValue(_packages, idx);
+      _showCupertinoPickerPackage(cxt);
+    }
+    );
   }
 
   void _showCupertinoPickerUrl(BuildContext cxt) {
-    _showCupertinoPicker(cxt, _urls, (idx) {
+    _showCupertinoPicker(cxt, _urls, 
+    (idx) {
       setState(() {
         _curUrl = _urls[idx];
       });
+    },
+    (idx) {
+      _removeValue(_urls, idx);
+      _showCupertinoPickerUrl(cxt);
     });
   }
 
@@ -253,6 +318,33 @@ class _MyHomePageState extends State<MyHomePage> {
                   setState(() {
                     _curAddUrl = "";
                   });
+                }
+              },
+              disabledColor: Colors.grey,
+              color: Colors.blue,
+              pressedOpacity: 0.9,
+            ),
+            Padding(
+              padding: EdgeInsets.fromLTRB(16, 16, 16, 0)
+            ),
+            CupertinoButton(
+              child: Text(
+                "Launch APP",
+                style: style,
+              ),
+              onPressed: () {
+                const platform = const MethodChannel('com.tangs.com/launch');
+                try {
+                  final args = Map();
+                  args["pkg"] = _curPackage;
+                  args["url"] = _curUrl;
+                  platform.invokeMethod("launch", args);
+                  // int ret = await platform.invokeMethod('saveFile', txt);
+                  // if (ret != 0) {
+                  //   debugPrint("Save Failed.");  
+                  // }
+                } on PlatformException catch (e) {
+                  debugPrint("Failed: '${e.message}'.");
                 }
               },
               disabledColor: Colors.grey,
