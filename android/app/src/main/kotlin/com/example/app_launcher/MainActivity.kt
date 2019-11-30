@@ -28,12 +28,12 @@ class MainActivity: FlutterActivity() {
 //    Intent()
 //    var msg = "pkg: " + pkg + ", url: " + url
 //    Toast.makeText(this, msg, Toast.LENGTH_LONG).show()
-    var bundle = Bundle()
-    bundle.putBoolean("modifyUrl", true)
-    bundle.putString("url", url)
-    var intent = packageManager.getLaunchIntentForPackage(pkg)
-    intent.putExtras(bundle)
     try {
+      var bundle = Bundle()
+      bundle.putBoolean("modifyUrl", true)
+      bundle.putString("url", url)
+      var intent = packageManager.getLaunchIntentForPackage(pkg)
+      intent.putExtras(bundle)
       startActivity(intent)
     } catch (e: Exception) {
       Toast.makeText(this, "未找到程序,请确认包名是否正确.", Toast.LENGTH_LONG).show()
