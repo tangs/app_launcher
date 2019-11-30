@@ -126,6 +126,10 @@ class _MyHomePageState extends State<MyHomePage> {
           _curPackage = _curAddPackage;
         });
       }
+      _savePackages();
+      setState(() {
+        _curAddPackage = "";
+      });
     }
     return ret;
   }
@@ -138,58 +142,58 @@ class _MyHomePageState extends State<MyHomePage> {
           _curUrl = _curAddUrl;
         });
       }
+      _saveUrls();
+      setState(() {
+        _curAddUrl = "";
+      });
     }
     return ret;
   }
 
   void _showCupertinoPicker(BuildContext cxt, List<String> values,
-      Function onSelected, Function onRemove) {
+      String value, Function onSelected, Function onRemove) {
     final widgets = List<Widget>();
     if (values == null || values.length == 0) {
       // TODO 没有包名
       return;
     }
     // for (String value in values) {
+    int idx = 0;
     for (int i = 0; i < values.length; ++i) {
-      String value = values[i];
-      // widgets.add(Text(value));
+      String text = values[i];
+      if (text == value) {
+        idx = i;
+      }
       widgets.add(
-        // child: Text(value),
         Row(
           children: <Widget>[
-            // Text(value),
             Expanded(
               child: Center(
-                child: Text(value),
+                child: Text(text),
               ),
-              // child: Text(value),
             ),
-            // FlatButton(
-            //   child: Text(
-            //     "删除",
-            //   ),
-            //   onPressed: () {
-            //     onRemove(i);
-            //   },
-            // ),
           ],
         ),
       );
     }
 
-    showCupertinoModalPopup(context: cxt, builder: (cxt){
+    showModalBottomSheet(context: cxt, builder: (cxt) {
       return Container(
         height: 200,
-        child: CupertinoPicker(itemExtent: 60,
+        child: CupertinoPicker(
+          itemExtent: 60,
           onSelectedItemChanged: onSelected, 
-          children: widgets
+          children: widgets,
+          scrollController: FixedExtentScrollController(
+            initialItem: idx,
+          ),
         ),
       );
     });
   }
 
   void _showCupertinoPickerPackage(BuildContext cxt) {
-    _showCupertinoPicker(cxt, _packages, 
+    _showCupertinoPicker(cxt, _packages, _curPackage,
     (idx) {
       setState(() {
         _curPackage = _packages[idx];
@@ -203,7 +207,7 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void _showCupertinoPickerUrl(BuildContext cxt) {
-    _showCupertinoPicker(cxt, _urls, 
+    _showCupertinoPicker(cxt, _urls, _curUrl,
     (idx) {
       setState(() {
         _curUrl = _urls[idx];
@@ -215,21 +219,41 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
+  void _launchApp() {
+    const platform = const MethodChannel('com.tangs.com/launch');
+    try {
+      final args = Map();
+      args["pkg"] = _curPackage;
+      args["url"] = _curUrl;
+      platform.invokeMethod("launch", args);
+    } on PlatformException catch (e) {
+      debugPrint("Failed: '${e.message}'.");
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     _loadPackages();
     _loadUrls();
     final style = TextStyle(
       color: Colors.black87,
-      fontSize: 24
+      fontSize: 20
     );
     final style1 = TextStyle(
       color: Colors.blue,
-      fontSize: 24
+      fontSize: 20
     );
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.title),
+        actions: <Widget>[
+          IconButton(
+            icon: Icon(Icons.settings),
+            onPressed: () {
+              
+            },
+          )
+        ],
       ),
       body: Center(
           child: SingleChildScrollView(
@@ -238,15 +262,9 @@ class _MyHomePageState extends State<MyHomePage> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: <Widget>[
-                Text(
-                  "包名",
-                  style: style,
-                ),
+                Text("包名", style: style,),
                 FlatButton(
-                  child: Text(
-                    _curPackage,
-                    style: style1,
-                  ),
+                  child: Text(_curPackage, style: style1,),
                   onPressed: () {
                     _showCupertinoPickerPackage(context);
                   },
@@ -267,32 +285,16 @@ class _MyHomePageState extends State<MyHomePage> {
                   padding: EdgeInsets.fromLTRB(10, 10, 10, 0)
                 ),
                 CupertinoButton(
-                  child: Text(
-                    "新增包名",
-                    style: style,
-                  ),
-                  onPressed: () {
-                    if (_addPackage()) {
-                      _savePackages();
-                      setState(() {
-                        _curAddPackage = "";
-                      });
-                    }
-                  },
+                  child: Text("新增包名", style: style,),
+                  onPressed: _addPackage,
                   disabledColor: Colors.grey,
                   color: Colors.blue,
                   pressedOpacity: 0.9,
                 ),
                 Padding(padding: EdgeInsets.all(10),),
-                Text(
-                  "服务器地址",
-                  style: style,
-                ),
+                Text("服务器地址", style: style,),
                 FlatButton(
-                  child: Text(
-                    _curUrl,
-                    style: style1,
-                  ),
+                  child: Text(_curUrl, style: style1,),
                   onPressed: () {
                     _showCupertinoPickerUrl(context);
                   },
@@ -313,18 +315,8 @@ class _MyHomePageState extends State<MyHomePage> {
                   padding: EdgeInsets.fromLTRB(16, 16, 16, 0)
                 ),
                 CupertinoButton(
-                  child: Text(
-                    "新增服务器",
-                    style: style,
-                  ),
-                  onPressed: () {
-                    if (_addUrl()) {
-                      _saveUrls();
-                      setState(() {
-                        _curAddUrl = "";
-                      });
-                    }
-                  },
+                  child: Text("新增服务器", style: style, ),
+                  onPressed: _addUrl,
                   disabledColor: Colors.grey,
                   color: Colors.blue,
                   pressedOpacity: 0.9,
@@ -333,25 +325,8 @@ class _MyHomePageState extends State<MyHomePage> {
                   padding: EdgeInsets.fromLTRB(16, 16, 16, 0)
                 ),
                 CupertinoButton(
-                  child: Text(
-                    "Launch APP",
-                    style: style,
-                  ),
-                  onPressed: () {
-                    const platform = const MethodChannel('com.tangs.com/launch');
-                    try {
-                      final args = Map();
-                      args["pkg"] = _curPackage;
-                      args["url"] = _curUrl;
-                      platform.invokeMethod("launch", args);
-                      // int ret = await platform.invokeMethod('saveFile', txt);
-                      // if (ret != 0) {
-                      //   debugPrint("Save Failed.");  
-                      // }
-                    } on PlatformException catch (e) {
-                      debugPrint("Failed: '${e.message}'.");
-                    }
-                  },
+                  child: Text("Launch APP", style: style,),
+                  onPressed: _launchApp,
                   disabledColor: Colors.grey,
                   color: Colors.blue,
                   pressedOpacity: 0.9,
