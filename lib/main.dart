@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 
-import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:toast/toast.dart';
 
 void main() => runApp(MyApp());
 
@@ -73,6 +75,14 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
+  void _toast(String txt) {
+    Toast.show(
+      txt, 
+      context, 
+      duration: Toast.LENGTH_LONG, 
+      gravity:  Toast.BOTTOM);
+  }
+
   void _save(String key, List<String> value) async {
     if (_packages != null) {
       final prefs = await SharedPreferences.getInstance();
@@ -90,28 +100,29 @@ class _MyHomePageState extends State<MyHomePage> {
 
   bool _addValue(List<String> values, String value) {
     if (value == null || value.length == 0) {
-      // TODO 包名为空
+      _toast("添加内容为空.");
       return false;
     }
     if (values == null) {
-      // TODO
+      _toast("数据加载中.");
       return false;
     }
     if (values.indexOf(value) != -1) {
-      // TODO 重复的包名
+      _toast("重复的数据");
       return false;
     }
     values.add(value);
+    _toast("数据添加成功");
     return true;
   }
 
   bool _removeValue(List<String> values, int idx) {
     if (values == null) {
-      // TODO
+      _toast("数据加载中.");
       return false;
     }
     if (values.length <= idx) {
-      // TODO 
+      _toast("错误的索引:" + idx.toString());
       return false;
     }
     values.removeAt(idx);
@@ -154,7 +165,6 @@ class _MyHomePageState extends State<MyHomePage> {
       String value, Function onSelected, Function onRemove) {
     final widgets = List<Widget>();
     if (values == null || values.length == 0) {
-      // TODO 没有包名
       return;
     }
     // for (String value in values) {
@@ -246,13 +256,20 @@ class _MyHomePageState extends State<MyHomePage> {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.title),
+        // 管理数据
         actions: <Widget>[
           IconButton(
-            icon: Icon(Icons.settings),
+            icon: Icon(Icons.android),
             onPressed: () {
-              
+              _toast("管理功能暂未开放");
             },
-          )
+          ),
+          IconButton(
+            icon: Icon(Icons.http),
+            onPressed: () {
+              _toast("管理功能暂未开放");
+            },
+          ),
         ],
       ),
       body: Center(
@@ -300,6 +317,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   },
                 ),
                 TextField(
+                  keyboardType: TextInputType.url,
                   decoration: InputDecoration(
                     icon: Icon(Icons.http),
                     labelText: "新增服务器地址",
