@@ -36,7 +36,7 @@ class MainActivity: FlutterActivity() {
     try {
       startActivity(intent)
     } catch (e: Exception) {
-      Toast.makeText(this, "为找到程序,请确认包名是否正确.", Toast.LENGTH_LONG).show()
+      Toast.makeText(this, "未找到程序,请确认包名是否正确.", Toast.LENGTH_LONG).show()
     }
   }
 }
