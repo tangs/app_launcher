@@ -36,15 +36,15 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   // int _counter = 0;
   // 当前所有包名
-  final String _packagesKey = "packages";
-  final String _urlsKey = "urls";
+  final String _packagesKey = 'packages';
+  final String _urlsKey = 'urls';
 
-  String _curPackage = "";
-  String _curUrl = "";
+  String _curPackage = '';
+  String _curUrl = '';
 
   // 当前新增包名
-  String _curAddPackage = "";
-  String _curAddUrl = "";
+  String _curAddPackage = '';
+  String _curAddUrl = '';
 
   List<String> _packages;
   List<String> _urls;
@@ -100,29 +100,29 @@ class _MyHomePageState extends State<MyHomePage> {
 
   bool _addValue(List<String> values, String value) {
     if (value == null || value.length == 0) {
-      _toast("添加内容为空.");
+      _toast('添加内容为空.');
       return false;
     }
     if (values == null) {
-      _toast("数据加载中.");
+      _toast('数据加载中.');
       return false;
     }
     if (values.indexOf(value) != -1) {
-      _toast("重复的数据");
+      _toast('重复的数据');
       return false;
     }
     values.add(value);
-    _toast("数据添加成功");
+    _toast('数据添加成功');
     return true;
   }
 
   bool _removeValue(List<String> values, int idx) {
     if (values == null) {
-      _toast("数据加载中.");
+      _toast('数据加载中.');
       return false;
     }
     if (values.length <= idx) {
-      _toast("错误的索引:" + idx.toString());
+      _toast('错误的索引:' + idx.toString());
       return false;
     }
     values.removeAt(idx);
@@ -139,7 +139,7 @@ class _MyHomePageState extends State<MyHomePage> {
       }
       _savePackages();
       setState(() {
-        _curAddPackage = "";
+        _curAddPackage = '';
       });
     }
     return ret;
@@ -155,7 +155,7 @@ class _MyHomePageState extends State<MyHomePage> {
       }
       _saveUrls();
       setState(() {
-        _curAddUrl = "";
+        _curAddUrl = '';
       });
     }
     return ret;
@@ -165,6 +165,7 @@ class _MyHomePageState extends State<MyHomePage> {
       String value, Function onSelected, Function onRemove) {
     final widgets = List<Widget>();
     if (values == null || values.length == 0) {
+      _toast('没有相应数据.');
       return;
     }
     // for (String value in values) {
@@ -233,12 +234,53 @@ class _MyHomePageState extends State<MyHomePage> {
     const platform = const MethodChannel('com.tangs.com/launch');
     try {
       final args = Map();
-      args["pkg"] = _curPackage;
-      args["url"] = _curUrl;
-      platform.invokeMethod("launch", args);
+      args['pkg'] = _curPackage;
+      args['url'] = _curUrl;
+      platform.invokeMethod('launch', args);
     } on PlatformException catch (e) {
-      debugPrint("Failed: '${e.message}'.");
+      debugPrint('Failed: ${e.message}.');
     }
+  }
+
+  void _showDeleteDialog() async {
+    showDialog<FlatButton>(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('提示'),
+          content: Text('确认清除一下数据?'),
+          actions: <Widget>[
+            FlatButton(
+              child: Text('包名'),
+              onPressed: () {
+                Navigator.of(context).pop();
+                setState(() {
+                  _packages.clear();
+                  _curPackage = '';
+                });
+              },
+            ),
+            FlatButton(
+              child: Text('地址'),
+              onPressed: () {
+                Navigator.of(context).pop();
+                setState(() {
+                  _urls.clear();
+                  _curUrl = '';
+                });
+              },
+            ),
+            FlatButton(
+              child: Text('取消'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      }
+    );
   }
 
   @override
@@ -261,13 +303,19 @@ class _MyHomePageState extends State<MyHomePage> {
           IconButton(
             icon: Icon(Icons.android),
             onPressed: () {
-              _toast("管理功能暂未开放");
+              _toast('管理功能暂未开放');
             },
           ),
           IconButton(
             icon: Icon(Icons.http),
             onPressed: () {
-              _toast("管理功能暂未开放");
+              _toast('管理功能暂未开放');
+            },
+          ),
+          IconButton(
+            icon: Icon(Icons.delete),
+            onPressed: () {
+              _showDeleteDialog();
             },
           ),
         ],
@@ -279,7 +327,7 @@ class _MyHomePageState extends State<MyHomePage> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: <Widget>[
-                Text("包名", style: style,),
+                Text('包名', style: style,),
                 FlatButton(
                   child: Text(_curPackage, style: style1,),
                   onPressed: () {
@@ -289,7 +337,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 TextField(
                   decoration: InputDecoration(
                     icon: Icon(Icons.android),
-                    labelText: "新增包名",
+                    labelText: '新增包名',
                   ),
                   controller: TextEditingController(
                     text: _curAddPackage
@@ -302,14 +350,14 @@ class _MyHomePageState extends State<MyHomePage> {
                   padding: EdgeInsets.fromLTRB(10, 10, 10, 0)
                 ),
                 CupertinoButton(
-                  child: Text("新增包名", style: style,),
+                  child: Text('新增包名', style: style,),
                   onPressed: _addPackage,
                   disabledColor: Colors.grey,
                   color: Colors.blue,
                   pressedOpacity: 0.9,
                 ),
                 Padding(padding: EdgeInsets.all(10),),
-                Text("服务器地址", style: style,),
+                Text('服务器地址', style: style,),
                 FlatButton(
                   child: Text(_curUrl, style: style1,),
                   onPressed: () {
@@ -320,7 +368,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   keyboardType: TextInputType.url,
                   decoration: InputDecoration(
                     icon: Icon(Icons.http),
-                    labelText: "新增服务器地址",
+                    labelText: '新增服务器地址',
                   ),
                   controller: TextEditingController(
                     text: _curAddUrl
@@ -333,7 +381,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   padding: EdgeInsets.fromLTRB(16, 16, 16, 0)
                 ),
                 CupertinoButton(
-                  child: Text("新增服务器", style: style, ),
+                  child: Text('新增服务器', style: style, ),
                   onPressed: _addUrl,
                   disabledColor: Colors.grey,
                   color: Colors.blue,
@@ -343,7 +391,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   padding: EdgeInsets.fromLTRB(16, 16, 16, 0)
                 ),
                 CupertinoButton(
-                  child: Text("Launch APP", style: style,),
+                  child: Text('Launch APP', style: style,),
                   onPressed: _launchApp,
                   disabledColor: Colors.grey,
                   color: Colors.blue,
