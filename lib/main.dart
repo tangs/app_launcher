@@ -220,7 +220,11 @@ class _MyHomePageState extends State<MyHomePage> {
     _loadPackages();
     _loadUrls();
     final style = TextStyle(
-      color: Colors.black,
+      color: Colors.black87,
+      fontSize: 24
+    );
+    final style1 = TextStyle(
+      color: Colors.blue,
       fontSize: 24
     );
     return Scaffold(
@@ -228,135 +232,133 @@ class _MyHomePageState extends State<MyHomePage> {
         title: Text(widget.title),
       ),
       body: Center(
-        child: Column(
-          children: <Widget>[
-            Padding(
-              padding: EdgeInsets.fromLTRB(16, 16, 16, 0)
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(8),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: <Widget>[
+                Text(
+                  "包名",
+                  style: style,
+                ),
+                FlatButton(
+                  child: Text(
+                    _curPackage,
+                    style: style1,
+                  ),
+                  onPressed: () {
+                    _showCupertinoPickerPackage(context);
+                  },
+                ),
+                TextField(
+                  decoration: InputDecoration(
+                    icon: Icon(Icons.android),
+                    labelText: "新增包名",
+                  ),
+                  controller: TextEditingController(
+                    text: _curAddPackage
+                  ),
+                  onChanged: (txt) {
+                    _curAddPackage = txt;
+                  },
+                ),
+                Padding(
+                  padding: EdgeInsets.fromLTRB(10, 10, 10, 0)
+                ),
+                CupertinoButton(
+                  child: Text(
+                    "新增包名",
+                    style: style,
+                  ),
+                  onPressed: () {
+                    if (_addPackage()) {
+                      _savePackages();
+                      setState(() {
+                        _curAddPackage = "";
+                      });
+                    }
+                  },
+                  disabledColor: Colors.grey,
+                  color: Colors.blue,
+                  pressedOpacity: 0.9,
+                ),
+                Padding(padding: EdgeInsets.all(10),),
+                Text(
+                  "服务器地址",
+                  style: style,
+                ),
+                FlatButton(
+                  child: Text(
+                    _curUrl,
+                    style: style1,
+                  ),
+                  onPressed: () {
+                    _showCupertinoPickerUrl(context);
+                  },
+                ),
+                TextField(
+                  decoration: InputDecoration(
+                    icon: Icon(Icons.http),
+                    labelText: "新增服务器地址",
+                  ),
+                  controller: TextEditingController(
+                    text: _curAddUrl
+                  ),
+                  onChanged: (txt) {
+                    _curAddUrl = txt;
+                  },
+                ),
+                Padding(
+                  padding: EdgeInsets.fromLTRB(16, 16, 16, 0)
+                ),
+                CupertinoButton(
+                  child: Text(
+                    "新增服务器",
+                    style: style,
+                  ),
+                  onPressed: () {
+                    if (_addUrl()) {
+                      _saveUrls();
+                      setState(() {
+                        _curAddUrl = "";
+                      });
+                    }
+                  },
+                  disabledColor: Colors.grey,
+                  color: Colors.blue,
+                  pressedOpacity: 0.9,
+                ),
+                Padding(
+                  padding: EdgeInsets.fromLTRB(16, 16, 16, 0)
+                ),
+                CupertinoButton(
+                  child: Text(
+                    "Launch APP",
+                    style: style,
+                  ),
+                  onPressed: () {
+                    const platform = const MethodChannel('com.tangs.com/launch');
+                    try {
+                      final args = Map();
+                      args["pkg"] = _curPackage;
+                      args["url"] = _curUrl;
+                      platform.invokeMethod("launch", args);
+                      // int ret = await platform.invokeMethod('saveFile', txt);
+                      // if (ret != 0) {
+                      //   debugPrint("Save Failed.");  
+                      // }
+                    } on PlatformException catch (e) {
+                      debugPrint("Failed: '${e.message}'.");
+                    }
+                  },
+                  disabledColor: Colors.grey,
+                  color: Colors.blue,
+                  pressedOpacity: 0.9,
+                ),
+              ],
             ),
-            Text(
-              "包名",
-              style: style,
-            ),
-            FlatButton(
-              child: Text(
-                _curPackage,
-                style: style,
-              ),
-              onPressed: () {
-                _showCupertinoPickerPackage(context);
-              },
-            ),
-            TextField(
-              decoration: InputDecoration(
-                icon: Icon(Icons.android),
-                labelText: "新增包名",
-              ),
-              controller: TextEditingController(
-                text: _curAddPackage
-              ),
-              onChanged: (txt) {
-                _curAddPackage = txt;
-              },
-            ),
-            Padding(
-              padding: EdgeInsets.fromLTRB(16, 16, 16, 0)
-            ),
-            CupertinoButton(
-              child: Text(
-                "新增包名",
-                style: style,
-              ),
-              onPressed: () {
-                if (_addPackage()) {
-                  _savePackages();
-                  setState(() {
-                    _curAddPackage = "";
-                  });
-                }
-              },
-              disabledColor: Colors.grey,
-              color: Colors.blue,
-              pressedOpacity: 0.9,
-            ),
-            Padding(padding: EdgeInsets.all(32),),
-            Text(
-              "服务器地址",
-              style: style,
-            ),
-            FlatButton(
-              child: Text(
-                _curUrl,
-                style: style,
-              ),
-              onPressed: () {
-                _showCupertinoPickerUrl(context);
-              },
-            ),
-            TextField(
-              decoration: InputDecoration(
-                icon: Icon(Icons.http),
-                labelText: "新增服务器地址",
-              ),
-              controller: TextEditingController(
-                text: _curAddUrl
-              ),
-              onChanged: (txt) {
-                _curAddUrl = txt;
-              },
-            ),
-            Padding(
-              padding: EdgeInsets.fromLTRB(16, 16, 16, 0)
-            ),
-            CupertinoButton(
-              child: Text(
-                "新增服务器",
-                style: style,
-              ),
-              onPressed: () {
-                if (_addUrl()) {
-                  _saveUrls();
-                  setState(() {
-                    _curAddUrl = "";
-                  });
-                }
-              },
-              disabledColor: Colors.grey,
-              color: Colors.blue,
-              pressedOpacity: 0.9,
-            ),
-            Padding(
-              padding: EdgeInsets.fromLTRB(16, 16, 16, 0)
-            ),
-            CupertinoButton(
-              child: Text(
-                "Launch APP",
-                style: style,
-              ),
-              onPressed: () {
-                const platform = const MethodChannel('com.tangs.com/launch');
-                try {
-                  final args = Map();
-                  args["pkg"] = _curPackage;
-                  args["url"] = _curUrl;
-                  platform.invokeMethod("launch", args);
-                  // int ret = await platform.invokeMethod('saveFile', txt);
-                  // if (ret != 0) {
-                  //   debugPrint("Save Failed.");  
-                  // }
-                } on PlatformException catch (e) {
-                  debugPrint("Failed: '${e.message}'.");
-                }
-              },
-              disabledColor: Colors.grey,
-              color: Colors.blue,
-              pressedOpacity: 0.9,
-            ),
-            Expanded(
-              child: Padding(
-                padding: EdgeInsets.all(16),
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );

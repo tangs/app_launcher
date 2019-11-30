@@ -1,6 +1,7 @@
 package com.example.app_launcher
 
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Bundle
 import android.widget.Toast
 
@@ -25,7 +26,17 @@ class MainActivity: FlutterActivity() {
 
   private fun launchApp(pkg: String?, url: String?) {
 //    Intent()
-    var msg = "pak: " + pkg + ", url: " + url
-    Toast.makeText(this, msg, Toast.LENGTH_LONG).show()
+//    var msg = "pkg: " + pkg + ", url: " + url
+//    Toast.makeText(this, msg, Toast.LENGTH_LONG).show()
+    var bundle = Bundle()
+    bundle.putBoolean("modifyUrl", true)
+    bundle.putString("url", url)
+    var intent = packageManager.getLaunchIntentForPackage(pkg)
+    intent.putExtras(bundle)
+    try {
+      startActivity(intent)
+    } catch (e: Exception) {
+      Toast.makeText(this, "为找到程序,请确认包名是否正确.", Toast.LENGTH_LONG).show()
+    }
   }
 }
