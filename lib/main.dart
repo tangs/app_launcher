@@ -1,6 +1,8 @@
+import 'dart:io';
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
-
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
@@ -81,6 +83,7 @@ class _MyHomePageState extends State<MyHomePage> {
       context, 
       duration: Toast.LENGTH_LONG, 
       gravity:  Toast.BOTTOM);
+    print(txt);
   }
 
   void _save(String key, List<String> value) async {
@@ -98,21 +101,21 @@ class _MyHomePageState extends State<MyHomePage> {
     _save(_urlsKey, _urls);
   }
 
-  bool _addValue(List<String> values, String value) {
+  bool _addValue(List<String> values, String value, bool showMsg) {
     if (value == null || value.length == 0) {
-      _toast('添加内容为空.');
+      if (showMsg) _toast('添加内容为空.');
       return false;
     }
     if (values == null) {
-      _toast('数据加载中.');
+      if (showMsg) _toast('数据加载中.');
       return false;
     }
     if (values.indexOf(value) != -1) {
-      _toast('重复的数据');
+      if (showMsg) _toast('重复的数据');
       return false;
     }
     values.add(value);
-    _toast('数据添加成功');
+    if (showMsg) _toast('数据添加成功');
     return true;
   }
 
@@ -129,34 +132,31 @@ class _MyHomePageState extends State<MyHomePage> {
     return true;
   }
 
-  bool _addPackage() {
-    final ret = _addValue(_packages, _curAddPackage);
+  bool _addPackage(String pkg, bool showMsg) {
+    final ret = _addValue(_packages, pkg, showMsg);
     if (ret) {
       if (_packages != null && _packages.length == 1) {
         setState(() {
-          _curPackage = _curAddPackage;
+          _curPackage = pkg;
         });
       }
       _savePackages();
-      setState(() {
-        _curAddPackage = '';
-      });
+      // setState(() {
+      //   _curAddPackage = '';
+      // });
     }
     return ret;
   }
 
-  bool _addUrl() {
-    final ret = _addValue(_urls, _curAddUrl);
+  bool _addUrl(url, bool showMsg) {
+    final ret = _addValue(_urls, url, showMsg);
     if (ret) {
       if (_urls != null && _urls.length == 1) {
         setState(() {
-          _curUrl = _curAddUrl;
+          _curUrl = url;
         });
       }
       _saveUrls();
-      setState(() {
-        _curAddUrl = '';
-      });
     }
     return ret;
   }
@@ -242,14 +242,14 @@ class _MyHomePageState extends State<MyHomePage> {
     }
   }
 
-  void _showDeleteDialog() async {
+  void _showDeleteDialog() {
     showDialog<FlatButton>(
       context: context,
       barrierDismissible: false,
       builder: (BuildContext context) {
         return AlertDialog(
           title: Text('提示'),
-          content: Text('确认清除一下数据?'),
+          content: Text('确认清除以下数据?'),
           actions: <Widget>[
             FlatButton(
               child: Text('包名'),
@@ -269,6 +269,122 @@ class _MyHomePageState extends State<MyHomePage> {
                   _urls.clear();
                   _curUrl = '';
                 });
+              },
+            ),
+            FlatButton(
+              child: Text('取消'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      }
+    );
+  }
+
+  void _loading() {
+    showDialog<FlatButton>(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          contentPadding: EdgeInsets.fromLTRB(32, 64, 32, 64),
+          content: CupertinoActivityIndicator(
+            radius: 30,
+            animating: true,
+          ),
+        );
+      }
+    );
+    // _sync(Uri.http('192.168.3.95:8080', "/data/info.json"));
+  }
+
+  void _sync(String authority, String unencodedPath) async {
+    try {
+      var uri = Uri.http(authority, unencodedPath);
+      var httpClient = HttpClient();
+      httpClient.connectionTimeout = Duration(seconds: 10);
+      var request = await httpClient.getUrl(uri);
+      // var request = await httpClient
+      var response = await request.close();
+      var responseBody = await response.transform(Utf8Decoder()).join();
+      Map data = JsonDecoder().convert(responseBody);
+      if (data.containsKey('pkg')) {
+        // addValues(pkgs, _packages);
+        for (String pkg in data['pkg']) {
+          _addPackage(pkg, false);
+        }
+      }
+      if (data.containsKey('url')) {
+        // List urls = data['url'];
+        // addValues(urls, _urls);
+        for (String url in data['url']) {
+          _addUrl(url, false);
+        }
+      }
+      _toast("同步完成");
+    } catch (err) {
+      _toast("同步错误: " + err.toString());
+    } finally {
+      if (Navigator.canPop(context)) {
+        Navigator.pop(context);
+      }
+    }
+  }
+
+  void _showSyncDialog() {
+    var authority = '192.168.3.95:8080';
+    var unencodedPath = '/data/info.json';
+    showDialog<FlatButton>(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('同步数据?'),
+          // content: Text('确认清除以下数据?'),
+          contentPadding: EdgeInsets.all(16),
+          content: Container(
+            // height: 120,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                TextField(
+                  keyboardType: TextInputType.url,
+                  controller: TextEditingController(
+                    text: authority,
+                  ),
+                  decoration: InputDecoration(
+                    icon: Icon(Icons.http),
+                    labelText: 'authority',
+                  ),
+                  onChanged: (txt) {
+                    authority = txt;
+                  },
+                ),
+                TextField(
+                  keyboardType: TextInputType.url,
+                  controller: TextEditingController(
+                    text: unencodedPath,
+                  ),
+                  decoration: InputDecoration(
+                    icon: Icon(Icons.http),
+                    labelText: 'unencodedPath',
+                  ),
+                  onChanged: (txt) {
+                    unencodedPath = txt;
+                  },
+                ),
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            FlatButton(
+              child: Text('确定'),
+              onPressed: () {
+                Navigator.of(context).pop();
+                _loading();
+                _sync(authority, unencodedPath);
               },
             ),
             FlatButton(
@@ -318,6 +434,12 @@ class _MyHomePageState extends State<MyHomePage> {
               _showDeleteDialog();
             },
           ),
+          IconButton(
+            icon: Icon(Icons.sync),
+            onPressed: () {
+              _showSyncDialog();
+            },
+          ),
         ],
       ),
       body: Center(
@@ -351,7 +473,13 @@ class _MyHomePageState extends State<MyHomePage> {
                 ),
                 CupertinoButton(
                   child: Text('新增包名', style: style,),
-                  onPressed: _addPackage,
+                  onPressed: () {
+                    if (_addPackage(_curAddPackage, true)) {
+                      setState(() {
+                        _curAddPackage = '';
+                      });
+                    }
+                  },
                   disabledColor: Colors.grey,
                   color: Colors.blue,
                   pressedOpacity: 0.9,
@@ -382,7 +510,13 @@ class _MyHomePageState extends State<MyHomePage> {
                 ),
                 CupertinoButton(
                   child: Text('新增服务器', style: style, ),
-                  onPressed: _addUrl,
+                  onPressed: () {
+                    if (_addUrl(_curAddUrl, true)) {
+                      setState(() {
+                        _curAddUrl = '';
+                      });
+                    }
+                  },
                   disabledColor: Colors.grey,
                   color: Colors.blue,
                   pressedOpacity: 0.9,
