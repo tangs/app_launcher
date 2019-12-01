@@ -82,7 +82,8 @@ class _MyHomePageState extends State<MyHomePage> {
       txt, 
       context, 
       duration: Toast.LENGTH_LONG, 
-      gravity:  Toast.BOTTOM);
+      gravity:  Toast.BOTTOM
+    );
     print(txt);
   }
 
@@ -141,9 +142,6 @@ class _MyHomePageState extends State<MyHomePage> {
         });
       }
       _savePackages();
-      // setState(() {
-      //   _curAddPackage = '';
-      // });
     }
     return ret;
   }
@@ -168,7 +166,6 @@ class _MyHomePageState extends State<MyHomePage> {
       _toast('没有相应数据.');
       return;
     }
-    // for (String value in values) {
     int idx = 0;
     for (int i = 0; i < values.length; ++i) {
       String text = values[i];
