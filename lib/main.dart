@@ -36,44 +36,48 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  // int _counter = 0;
+  bool _loadCfgEnd = false;
   // 当前所有包名
-  final String _packagesKey = 'packages';
+  final String _pkgsKey = 'packages';
   final String _urlsKey = 'urls';
+  final String _syncUrlKey = 'syncUrl';
+  final String _syncPathKey = 'syncPath';
 
-  String _curPackage = '';
+  String _curPkg = '';
   String _curUrl = '';
+  String _syncUrl = '';
+  String _syncPath = '';
 
   // 当前新增包名
   String _curAddPackage = '';
   String _curAddUrl = '';
 
-  List<String> _packages;
+  List<String> _pkgs;
   List<String> _urls;
 
-  void _loadPackages() async {
-    if (_packages != null) return;
-    final prefs = await SharedPreferences.getInstance();
-    
-    setState(() {
-      _packages = prefs.getStringList(_packagesKey);
-      if (_packages == null) _packages = List();
-      if (_packages.length > 0) {
-        _curPackage = _packages[0];
-      }
-    });
+  _MyHomePageState() {
+    _loadCfg();
   }
 
-   void _loadUrls() async {
-    if (_urls != null) return;
+  void _loadCfg() async {
     final prefs = await SharedPreferences.getInstance();
-    
+    _pkgs = prefs.getStringList(_pkgsKey);
+    _urls = prefs.getStringList(_urlsKey);
+
+    _syncUrl = prefs.getString(_syncUrlKey);
+    _syncPath = prefs.getString(_syncPathKey);
+
+    if (_pkgs == null) _pkgs = List();
+    if (_urls == null) _urls = List();
+    if (_syncUrl == null) _syncUrl = '192.168.3.95:8080';
+    if (_syncPath == null) _syncPath = '/data/info.json';
+
+    // await Future.delayed(Duration(seconds: 5));
+
     setState(() {
-      _urls = prefs.getStringList(_urlsKey);
-      if (_urls == null) _urls = List();
-      if (_urls.length > 0) {
-        _curUrl = _urls[0];
-      }
+      if (_pkgs.length > 0) _curPkg = _pkgs[0];
+      if (_urls.length > 0) _curUrl = _urls[0];
+      _loadCfgEnd = true;
     });
   }
 
@@ -88,18 +92,21 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void _save(String key, List<String> value) async {
-    if (_packages != null) {
-      final prefs = await SharedPreferences.getInstance();
-      prefs.setStringList(key, value);
-    } 
+    final prefs = await SharedPreferences.getInstance();
+    prefs.setStringList(key, value);
   }
 
   void _savePackages() async {
-    _save(_packagesKey, _packages);
+    _save(_pkgsKey, _pkgs);
   }
 
   void _saveUrls() async {
     _save(_urlsKey, _urls);
+  }
+  
+  void _updateStrValue(String key, String value) async {
+    final prefs = await SharedPreferences.getInstance();
+    prefs.setString(key, value);
   }
 
   bool _addValue(List<String> values, String value, bool showMsg) {
@@ -134,11 +141,11 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   bool _addPackage(String pkg, bool showMsg) {
-    final ret = _addValue(_packages, pkg, showMsg);
+    final ret = _addValue(_pkgs, pkg, showMsg);
     if (ret) {
-      if (_packages != null && _packages.length == 1) {
+      if (_pkgs.length == 1) {
         setState(() {
-          _curPackage = pkg;
+          _curPkg = pkg;
         });
       }
       _savePackages();
@@ -149,7 +156,7 @@ class _MyHomePageState extends State<MyHomePage> {
   bool _addUrl(url, bool showMsg) {
     final ret = _addValue(_urls, url, showMsg);
     if (ret) {
-      if (_urls != null && _urls.length == 1) {
+      if (_urls.length == 1) {
         setState(() {
           _curUrl = url;
         });
@@ -201,14 +208,14 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void _showCupertinoPickerPackage(BuildContext cxt) {
-    _showCupertinoPicker(cxt, _packages, _curPackage,
+    _showCupertinoPicker(cxt, _pkgs, _curPkg,
     (idx) {
       setState(() {
-        _curPackage = _packages[idx];
+        _curPkg = _pkgs[idx];
       });
     },
     (idx) {
-      _removeValue(_packages, idx);
+      _removeValue(_pkgs, idx);
       _showCupertinoPickerPackage(cxt);
     }
     );
@@ -231,7 +238,7 @@ class _MyHomePageState extends State<MyHomePage> {
     const platform = const MethodChannel('com.tangs.com/launch');
     try {
       final args = Map();
-      args['pkg'] = _curPackage;
+      args['pkg'] = _curPkg;
       args['url'] = _curUrl;
       platform.invokeMethod('launch', args);
     } on PlatformException catch (e) {
@@ -253,8 +260,8 @@ class _MyHomePageState extends State<MyHomePage> {
               onPressed: () {
                 Navigator.of(context).pop();
                 setState(() {
-                  _packages.clear();
-                  _curPackage = '';
+                  _pkgs.clear();
+                  _curPkg = '';
                 });
               },
             ),
@@ -299,6 +306,8 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void _sync(String authority, String unencodedPath) async {
     try {
+      _updateStrValue(_syncPathKey, authority);
+      _updateStrValue(_syncPathKey, unencodedPath);
       var uri = Uri.http(authority, unencodedPath);
       var httpClient = HttpClient();
       httpClient.connectionTimeout = Duration(seconds: 10);
@@ -331,8 +340,8 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void _showSyncDialog() {
-    var authority = '192.168.3.95:8080';
-    var unencodedPath = '/data/info.json';
+    // var authority = '192.168.3.95:8080';
+    // var unencodedPath = '/data/info.json';
     showDialog<FlatButton>(
       context: context,
       barrierDismissible: false,
@@ -349,27 +358,27 @@ class _MyHomePageState extends State<MyHomePage> {
                 TextField(
                   keyboardType: TextInputType.url,
                   controller: TextEditingController(
-                    text: authority,
+                    text: _syncUrl,
                   ),
                   decoration: InputDecoration(
                     icon: Icon(Icons.http),
                     labelText: 'authority',
                   ),
                   onChanged: (txt) {
-                    authority = txt;
+                    _syncUrl = txt;
                   },
                 ),
                 TextField(
                   keyboardType: TextInputType.url,
                   controller: TextEditingController(
-                    text: unencodedPath,
+                    text: _syncPath,
                   ),
                   decoration: InputDecoration(
                     icon: Icon(Icons.http),
                     labelText: 'unencodedPath',
                   ),
                   onChanged: (txt) {
-                    unencodedPath = txt;
+                    _syncPath = txt;
                   },
                 ),
               ],
@@ -381,7 +390,7 @@ class _MyHomePageState extends State<MyHomePage> {
               onPressed: () {
                 Navigator.of(context).pop();
                 _loading();
-                _sync(authority, unencodedPath);
+                _sync(_syncUrl, _syncPath);
               },
             ),
             FlatButton(
@@ -396,10 +405,7 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    _loadPackages();
-    _loadUrls();
+  Widget _buildNormal(BuildContext context) {
     final style = TextStyle(
       color: Colors.black87,
       fontSize: 20
@@ -408,6 +414,113 @@ class _MyHomePageState extends State<MyHomePage> {
       color: Colors.blue,
       fontSize: 20
     );
+    return SingleChildScrollView(
+      child: Padding(
+        padding: const EdgeInsets.all(8),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: <Widget>[
+          Text('包名', style: style,),
+          FlatButton(
+            child: Text(_curPkg, style: style1,),
+            onPressed: () {
+              _showCupertinoPickerPackage(context);
+            },
+          ),
+          TextField(
+            decoration: InputDecoration(
+              icon: Icon(Icons.android),
+              labelText: '新增包名',
+            ),
+            controller: TextEditingController(
+              text: _curAddPackage
+            ),
+            onChanged: (txt) {
+              _curAddPackage = txt;
+            },
+          ),
+          Padding(
+            padding: EdgeInsets.fromLTRB(10, 10, 10, 0)
+          ),
+          CupertinoButton(
+            child: Text('新增包名', style: style,),
+            onPressed: () {
+              if (_addPackage(_curAddPackage, true)) {
+                setState(() {
+                  _curAddPackage = '';
+                });
+              }
+            },
+            disabledColor: Colors.grey,
+            color: Colors.blue,
+            pressedOpacity: 0.9,
+          ),
+          Padding(padding: EdgeInsets.all(10),),
+          Text('服务器地址', style: style,),
+          FlatButton(
+            child: Text(_curUrl, style: style1,),
+            onPressed: () {
+              _showCupertinoPickerUrl(context);
+            },
+          ),
+          TextField(
+            keyboardType: TextInputType.url,
+            decoration: InputDecoration(
+              icon: Icon(Icons.http),
+              labelText: '新增服务器地址',
+            ),
+            controller: TextEditingController(
+              text: _curAddUrl
+            ),
+            onChanged: (txt) {
+              _curAddUrl = txt;
+            },
+          ),
+          Padding(
+            padding: EdgeInsets.fromLTRB(16, 16, 16, 0)
+          ),
+          CupertinoButton(
+            child: Text('新增服务器', style: style, ),
+            onPressed: () {
+              if (_addUrl(_curAddUrl, true)) {
+                setState(() {
+                  _curAddUrl = '';
+                });
+              }
+            },
+            disabledColor: Colors.grey,
+            color: Colors.blue,
+            pressedOpacity: 0.9,
+          ),
+          Padding(
+            padding: EdgeInsets.fromLTRB(16, 16, 16, 0)
+          ),
+          CupertinoButton(
+            child: Text('Launch APP', style: style,),
+            onPressed: _launchApp,
+            disabledColor: Colors.grey,
+            color: Colors.blue,
+            pressedOpacity: 0.9,
+          ),
+        ],
+      ),
+    ),
+  );
+  }
+
+  Widget _buildLoading(BuildContext context, String tips) {
+    return Container(
+      padding: EdgeInsets.fromLTRB(32, 64, 32, 64),
+      child: CupertinoActivityIndicator(
+        radius: 30,
+        animating: true,
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.title),
@@ -440,98 +553,8 @@ class _MyHomePageState extends State<MyHomePage> {
         ],
       ),
       body: Center(
-          child: SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.all(8),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.start,
-                children: <Widget>[
-                Text('包名', style: style,),
-                FlatButton(
-                  child: Text(_curPackage, style: style1,),
-                  onPressed: () {
-                    _showCupertinoPickerPackage(context);
-                  },
-                ),
-                TextField(
-                  decoration: InputDecoration(
-                    icon: Icon(Icons.android),
-                    labelText: '新增包名',
-                  ),
-                  controller: TextEditingController(
-                    text: _curAddPackage
-                  ),
-                  onChanged: (txt) {
-                    _curAddPackage = txt;
-                  },
-                ),
-                Padding(
-                  padding: EdgeInsets.fromLTRB(10, 10, 10, 0)
-                ),
-                CupertinoButton(
-                  child: Text('新增包名', style: style,),
-                  onPressed: () {
-                    if (_addPackage(_curAddPackage, true)) {
-                      setState(() {
-                        _curAddPackage = '';
-                      });
-                    }
-                  },
-                  disabledColor: Colors.grey,
-                  color: Colors.blue,
-                  pressedOpacity: 0.9,
-                ),
-                Padding(padding: EdgeInsets.all(10),),
-                Text('服务器地址', style: style,),
-                FlatButton(
-                  child: Text(_curUrl, style: style1,),
-                  onPressed: () {
-                    _showCupertinoPickerUrl(context);
-                  },
-                ),
-                TextField(
-                  keyboardType: TextInputType.url,
-                  decoration: InputDecoration(
-                    icon: Icon(Icons.http),
-                    labelText: '新增服务器地址',
-                  ),
-                  controller: TextEditingController(
-                    text: _curAddUrl
-                  ),
-                  onChanged: (txt) {
-                    _curAddUrl = txt;
-                  },
-                ),
-                Padding(
-                  padding: EdgeInsets.fromLTRB(16, 16, 16, 0)
-                ),
-                CupertinoButton(
-                  child: Text('新增服务器', style: style, ),
-                  onPressed: () {
-                    if (_addUrl(_curAddUrl, true)) {
-                      setState(() {
-                        _curAddUrl = '';
-                      });
-                    }
-                  },
-                  disabledColor: Colors.grey,
-                  color: Colors.blue,
-                  pressedOpacity: 0.9,
-                ),
-                Padding(
-                  padding: EdgeInsets.fromLTRB(16, 16, 16, 0)
-                ),
-                CupertinoButton(
-                  child: Text('Launch APP', style: style,),
-                  onPressed: _launchApp,
-                  disabledColor: Colors.grey,
-                  color: Colors.blue,
-                  pressedOpacity: 0.9,
-                ),
-              ],
-            ),
-          ),
-        ),
+          child: _loadCfgEnd ? _buildNormal(context) : 
+            _buildLoading(context, "loading"),
       ),
     );
   }
