@@ -30,8 +30,8 @@ class MainActivity: FlutterActivity() {
 //    Toast.makeText(this, msg, Toast.LENGTH_LONG).show()
     try {
       var bundle = Bundle()
-      bundle.putBoolean("modifyUrl", true)
-      bundle.putString("url", url)
+      bundle.putBoolean("enableDevMode", true)
+      bundle.putString("devMode_url", url)
       var intent = packageManager.getLaunchIntentForPackage(pkg)
       intent.putExtras(bundle)
       startActivity(intent)
