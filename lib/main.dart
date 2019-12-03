@@ -69,8 +69,9 @@ class _MyHomePageState extends State<MyHomePage> {
 
     if (_pkgs == null) _pkgs = List();
     if (_urls == null) _urls = List();
-    if (_syncUrl == null) _syncUrl = '192.168.3.95:8080';
-    if (_syncPath == null) _syncPath = '/data/info.json';
+    // http://92.168.1.240:8080/cfg/1.json
+    if (_syncUrl == null) _syncUrl = '192.168.1.240:8080';
+    if (_syncPath == null) _syncPath = '/cfg/1.json';
 
     // await Future.delayed(Duration(seconds: 5));
 
@@ -306,7 +307,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void _sync(String authority, String unencodedPath) async {
     try {
-      _updateStrValue(_syncPathKey, authority);
+      _updateStrValue(_syncUrlKey, authority);
       _updateStrValue(_syncPathKey, unencodedPath);
       var uri = Uri.http(authority, unencodedPath);
       var httpClient = HttpClient();
@@ -317,14 +318,11 @@ class _MyHomePageState extends State<MyHomePage> {
       var responseBody = await response.transform(Utf8Decoder()).join();
       Map data = JsonDecoder().convert(responseBody);
       if (data.containsKey('pkg')) {
-        // addValues(pkgs, _packages);
         for (String pkg in data['pkg']) {
           _addPackage(pkg, false);
         }
       }
       if (data.containsKey('url')) {
-        // List urls = data['url'];
-        // addValues(urls, _urls);
         for (String url in data['url']) {
           _addUrl(url, false);
         }
@@ -340,18 +338,14 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void _showSyncDialog() {
-    // var authority = '192.168.3.95:8080';
-    // var unencodedPath = '/data/info.json';
     showDialog<FlatButton>(
       context: context,
       barrierDismissible: false,
       builder: (BuildContext context) {
         return AlertDialog(
           title: Text('同步数据?'),
-          // content: Text('确认清除以下数据?'),
           contentPadding: EdgeInsets.all(16),
           content: Container(
-            // height: 120,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: <Widget>[
@@ -526,18 +520,18 @@ class _MyHomePageState extends State<MyHomePage> {
         title: Text(widget.title),
         // 管理数据
         actions: <Widget>[
-          IconButton(
-            icon: Icon(Icons.android),
-            onPressed: () {
-              _toast('管理功能暂未开放');
-            },
-          ),
-          IconButton(
-            icon: Icon(Icons.http),
-            onPressed: () {
-              _toast('管理功能暂未开放');
-            },
-          ),
+          // IconButton(
+          //   icon: Icon(Icons.android),
+          //   onPressed: () {
+          //     _toast('管理功能暂未开放');
+          //   },
+          // ),
+          // IconButton(
+          //   icon: Icon(Icons.http),
+          //   onPressed: () {
+          //     _toast('管理功能暂未开放');
+          //   },
+          // ),
           IconButton(
             icon: Icon(Icons.delete),
             onPressed: () {
