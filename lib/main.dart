@@ -185,7 +185,7 @@ class _MyHomePageState extends State<MyHomePage> {
           children: <Widget>[
             Expanded(
               child: Center(
-                child: Text(text),
+                child: Text('[$text]'),
               ),
             ),
           ],
